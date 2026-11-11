@@ -1,21 +1,35 @@
-# Routes
+# Book Assist
 
-TanStack Start uses **file-based routing**. Every `.tsx` file in this directory
-defines a route. Do **not** create `src/pages/`, `src/routes/_app/index.tsx`, or
-`app/layout.tsx` — those are Next.js / Remix conventions. The only root layout
-is `src/routes/__root.tsx`.
+Book Assist is a TanStack Start + React application using Supabase for authentication and data.
 
-## Conventions
+## Requirements
 
-| File | URL |
-| --- | --- |
-| `index.tsx` | `/` |
-| `about.tsx` | `/about` |
-| `users/index.tsx` | `/users` |
-| `users/$id.tsx` | `/users/:id` (dynamic — bare `$`, no curly braces) |
-| `posts/{-$category}.tsx` | `/posts/:category?` (optional segment) |
-| `files/$.tsx` | `/files/*` (splat — read via `_splat` param, never `*`) |
-| `_layout.tsx` | layout route (renders children via `<Outlet />`) |
-| `__root.tsx` | app shell — wraps every page; preserve `<Outlet />` |
+- Node.js (current LTS)
+- npm
+- A Supabase project with the app's database schema and authentication configured
 
-`routeTree.gen.ts` is auto-generated. Don't edit it by hand.
+## Environment variables
+
+Create a local `.env` or `.env.local` file from `.env.example` and set:
+
+- `VITE_SUPABASE_URL`: your Supabase project's Project URL (browser/client)
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: your Supabase publishable key (starts with `sb_publishable_`)
+
+For server-side requests, also set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to the same project URL and publishable key. Do not put a Supabase secret/service-role key in any `VITE_*` variable or expose it in client code.
+
+In Vercel, add the same variables under **Project → Settings → Environment Variables** for Production, Preview, and Development as needed. Redeploy after changing environment variables.
+
+## Development
+
+```sh
+npm ci
+npm run dev
+```
+
+## Production build
+
+```sh
+npm run build
+```
+
+The Vercel project should use the repository's production branch (`main`) and the project name `book-assist`. Ensure the Supabase project is initialized and required environment variables are set before expecting the deployed app to work.
