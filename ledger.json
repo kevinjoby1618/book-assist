@@ -1,0 +1,4 @@
+[{"capability":"code","source":"zip","outcome":"migrate","status":"done","next_action":null},
+{"capability":"schema","source":"supabase types","outcome":"migrate","status":"done","next_action":null},
+{"capability":"records","source":"old backend","outcome":"migrate","status":"pending","next_action":"user exports books/students/transactions CSV"},
+{"capability":"auth","source":"email/password","outcome":"migrate","status":"done-new-signups","next_action":"existing users re-register"}]
