@@ -44,14 +44,8 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "in") {
-        if (/^l\d{3,}$/i.test(id)) {
-          const s = await signInWithLibrarianCode({ data: { code: id, pin } });
-          const { error } = await supabase.auth.setSession(s);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
-          if (error) throw new Error("Wrong email/code or PIN");
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
+        if (error) throw new Error("Wrong email or PIN");
         navigate({ to: "/dashboard" });
       } else {
         const res = await signUpLibrarian({ data: { email: id, name: librarianName.trim(), pin, redirectTo: window.location.origin } });
@@ -73,7 +67,7 @@ function AuthPage() {
           <p className="text-muted-foreground">Your librarian code is</p>
           <p className="font-mono text-5xl font-bold text-accent">{newCode || "—"}</p>
           <p className="text-sm text-muted-foreground">Write it down for your records. Sign in with your email and PIN.</p>
-          <Button className="w-full" onClick={() => { setNewCode(null); setMode("in"); setCode(newCode); setPin(""); }}>Go to sign in</Button>
+          <Button className="w-full" onClick={() => { setNewCode(null); setMode("in"); setCode(code.trim()); setPin(""); }}>Go to sign in</Button>
         </div>
       </div>
     );
