@@ -24,7 +24,9 @@ function ScanPage() {
   const qc = useQueryClient();
   const { data: registeredStudents, isLoading: studentsLoading } = useQuery(studentsQuery);
   const cam = useRef<CameraHandle>(null);
-  const [mode, setMode] = useState<"issue" | "return">("issue");
+  const deskWindow = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("desk") === "1";
+  const requestedMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "return" ? "return" : "issue";
+  const [mode, setMode] = useState<"issue" | "return">(requestedMode);
   const [step, setStep] = useState<Step>("face");
   const [status, setStatus] = useState("Look at the camera");
   const [student, setStudent] = useState<Student | null>(null);
