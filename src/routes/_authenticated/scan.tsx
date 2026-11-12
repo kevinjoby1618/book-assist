@@ -104,7 +104,7 @@ function ScanPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{mode === "issue" ? "Issue a book" : "Return a book"}</h1>
         {deskWindow ? (
-          <Button variant="outline" onClick={() => { window.close(); if (!window.closed) window.location.assign("/desk"); }}>Close desk</Button>
+          <Button variant="outline" onClick={() => window.location.assign("/desk")}>Back to student desk</Button>
         ) : (
           <div className="flex rounded-lg border border-border bg-secondary p-1">
             {(["issue", "return"] as const).map((m) => (
