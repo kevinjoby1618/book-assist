@@ -103,12 +103,16 @@ function ScanPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{mode === "issue" ? "Issue a book" : "Return a book"}</h1>
-        <div className="flex rounded-lg border border-border bg-secondary p-1">
-          {(["issue", "return"] as const).map((m) => (
-            <Button key={m} size="sm" variant={mode === m ? "default" : "ghost"} onClick={() => { setMode(m); reset(); }}
-              className="capitalize">{m}</Button>
-          ))}
-        </div>
+        {deskWindow ? (
+          <Button variant="outline" onClick={() => { window.close(); if (!window.closed) window.location.assign("/desk"); }}>Close desk</Button>
+        ) : (
+          <div className="flex rounded-lg border border-border bg-secondary p-1">
+            {(["issue", "return"] as const).map((m) => (
+              <Button key={m} size="sm" variant={mode === m ? "default" : "ghost"} onClick={() => { setMode(m); reset(); }}
+                className="capitalize">{m}</Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <ol className="grid grid-cols-3 gap-2">
