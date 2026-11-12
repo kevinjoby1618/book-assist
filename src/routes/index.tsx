@@ -48,7 +48,7 @@ function AuthPage() {
         if (error) throw new Error("Wrong email or PIN");
         navigate({ to: "/dashboard" });
       } else {
-        const res = await signUpLibrarian({ data: { email: id, name: librarianName.trim(), pin, redirectTo: window.location.origin } });
+        const res = await signUpLibrarian({ data: { email: id, name: librarianName.trim(), pin } });
         setNewCode(res.code ?? "");
         
       }
