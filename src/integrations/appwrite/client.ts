@@ -272,7 +272,7 @@ async function runBookTransaction(
 
 // A small compatibility surface keeps the existing Book Assist screens intact while
 // moving authentication, records, and book transactions to Appwrite.
-export const supabase: any = {
+export const appwriteStore: any = {
   auth: {
     async getUser() {
       try {
