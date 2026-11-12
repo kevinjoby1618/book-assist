@@ -104,7 +104,7 @@ class AppwriteQuery {
     return { data: Array.isArray(result.data) ? result.data[0] ?? null : result.data, error: result.error };
   }
 
-  then(resolve: (value: any) => unknown, reject?: (reason: unknown) => unknown) {
+  then(resolve?: (value: any) => unknown, reject?: (reason: unknown) => unknown) {
     return this.execute().then(resolve, reject);
   }
 
@@ -220,7 +220,6 @@ async function runBookTransaction(
           student_name: student.name,
           issue_date: issueDate.toISOString(),
           due_date: dueDate.toISOString(),
-          return_date: null,
           status: "Issued",
           created_at: issueDate.toISOString(),
         },
