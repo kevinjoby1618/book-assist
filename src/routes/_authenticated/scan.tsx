@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { recognizeBook } from "@/lib/book-recognition";
 import { matchFace } from "@/lib/face-recognition";
 import { studentsQuery } from "@/lib/library";
-import { supabase } from "@/integrations/supabase/client";
+import { appwriteStore } from "@/integrations/appwrite/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/scan")({
@@ -24,7 +24,9 @@ function ScanPage() {
   const qc = useQueryClient();
   const { data: registeredStudents, isLoading: studentsLoading } = useQuery(studentsQuery);
   const cam = useRef<CameraHandle>(null);
-  const [mode, setMode] = useState<"issue" | "return">("issue");
+  const deskWindow = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("desk") === "1";
+  const requestedMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "return" ? "return" : "issue";
+  const [mode, setMode] = useState<"issue" | "return">(requestedMode);
   const [step, setStep] = useState<Step>("face");
   const [status, setStatus] = useState("Look at the camera");
   const [student, setStudent] = useState<Student | null>(null);
@@ -79,7 +81,7 @@ function ScanPage() {
   async function confirm() {
     if (!student || !book) return;
     setBusy(true);
-    const { error } = await supabase.rpc(mode === "issue" ? "issue_book" : "return_book", { _student_id: student.student_id, _book_id: book.book_id });
+    const { error } = await appwriteStore.rpc(mode === "issue" ? "issue_book" : "return_book", { _student_id: student.student_id, _book_id: book.book_id });
     setBusy(false);
     qc.invalidateQueries();
     if (error) { setResult({ ok: false, msg: error.message }); toast.error(error.message); }
@@ -101,12 +103,16 @@ function ScanPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{mode === "issue" ? "Issue a book" : "Return a book"}</h1>
-        <div className="flex rounded-lg border border-border bg-secondary p-1">
-          {(["issue", "return"] as const).map((m) => (
-            <Button key={m} size="sm" variant={mode === m ? "default" : "ghost"} onClick={() => { setMode(m); reset(); }}
-              className="capitalize">{m}</Button>
-          ))}
-        </div>
+        {deskWindow ? (
+          <Button variant="outline" onClick={() => { window.close(); if (!window.closed) window.location.assign("/desk"); }}>Close desk</Button>
+        ) : (
+          <div className="flex rounded-lg border border-border bg-secondary p-1">
+            {(["issue", "return"] as const).map((m) => (
+              <Button key={m} size="sm" variant={mode === m ? "default" : "ghost"} onClick={() => { setMode(m); reset(); }}
+                className="capitalize">{m}</Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <ol className="grid grid-cols-3 gap-2">
