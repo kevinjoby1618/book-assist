@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, ScanFace, ScanLine } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { signInWithLibrarianCode, signUpLibrarian } from "@/lib/librarian-auth.functions";
+import { appwriteStore } from "@/integrations/appwrite/client";
+import { signUpLibrarian } from "@/lib/librarian-auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,7 @@ function AuthPage() {
   const [newCode, setNewCode] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    appwriteStore.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
@@ -44,19 +44,13 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "in") {
-        if (/^l\d{3,}$/i.test(id)) {
-          const s = await signInWithLibrarianCode({ data: { code: id, pin } });
-          const { error } = await supabase.auth.setSession(s);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
-          if (error) throw new Error("Wrong email/code or PIN");
-        }
+        const { error } = await appwriteStore.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
+        if (error) throw new Error("Wrong email or PIN");
         navigate({ to: "/dashboard" });
       } else {
-        const res = await signUpLibrarian({ data: { email: id, name: librarianName.trim(), pin, redirectTo: window.location.origin } });
+        const res = await signUpLibrarian({ data: { email: id, name: librarianName.trim(), pin } });
         setNewCode(res.code ?? "");
-        if (res.session) await supabase.auth.setSession(res.session);
+        
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -72,8 +66,8 @@ function AuthPage() {
           <h2 className="text-3xl font-bold">Account created</h2>
           <p className="text-muted-foreground">Your librarian code is</p>
           <p className="font-mono text-5xl font-bold text-accent">{newCode || "—"}</p>
-          <p className="text-sm text-muted-foreground">Write it down — you can sign in with this code and your PIN.</p>
-          <Button className="w-full" onClick={() => { setNewCode(null); setMode("in"); setCode(newCode); setPin(""); }}>Go to sign in</Button>
+          <p className="text-sm text-muted-foreground">Save it for your records. Your account is ready to use.</p>
+          <Button className="w-full" onClick={() => navigate({ to: "/dashboard" })}>Continue to Book Assist</Button>
         </div>
       </div>
     );
@@ -97,10 +91,10 @@ function AuthPage() {
         <form onSubmit={submit} className="w-full max-w-sm space-y-5">
           <div>
             <h2 className="text-3xl font-bold">{mode === "in" ? "Librarian sign in" : "Create librarian account"}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{mode === "in" ? "Enter your librarian code (e.g. L001) or email, and your 4-digit PIN." : "Enter your email and choose a 4-digit PIN. You'll get a librarian code."}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{mode === "in" ? "Enter your email address and your 4-digit PIN." : "Enter your email and choose a 4-digit PIN. You'll get a librarian code."}</p>
           </div>
           {mode === "up" && <div className="space-y-2"><Label htmlFor="librarianName">Librarian name</Label><Input id="librarianName" required autoComplete="name" placeholder="Your full name" value={librarianName} onChange={(e) => setLibrarianName(e.target.value)} /></div>}
-          <div className="space-y-2"><Label htmlFor="code">{mode === "in" ? "Librarian code or email" : "Email"}</Label><Input id="code" type={mode === "in" ? "text" : "email"} required autoComplete="username" placeholder={mode === "in" ? "Librarian code/email" : "Email..."} value={code} onChange={(e) => setCode(e.target.value)} /></div>
+          <div className="space-y-2"><Label htmlFor="code">{mode === "in" ? "Email" : "Email"}</Label><Input id="code" type="email" required autoComplete="username" placeholder="Email address" value={code} onChange={(e) => setCode(e.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="pin">PIN</Label><Input id="pin" type="password" inputMode="numeric" required maxLength={4} pattern="\d{4}" placeholder="••••" className="tracking-[0.5em]" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} /></div>
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}</Button>
           <Button variant="link" type="button" onClick={() => setMode(mode === "in" ? "up" : "in")} className="w-full text-muted-foreground hover:text-foreground">

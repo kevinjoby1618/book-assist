@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { appwriteStore } from "@/integrations/appwrite/client";
 
 type Book = {
   book_id: string;
@@ -79,7 +79,7 @@ function cropForOcr(image: string) {
 }
 
 export async function recognizeBook(image: string): Promise<RecognitionResult> {
-  const { data: books, error } = await supabase
+  const { data: books, error } = await appwriteStore
     .from("books")
     .select("book_id, title, author, category, availability");
   if (error) throw new Error(error.message);

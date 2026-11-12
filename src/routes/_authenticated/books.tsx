@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { appwriteStore } from "@/integrations/appwrite/client";
 import { booksQuery } from "@/lib/library";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ function BooksPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this book?")) return;
-    const { error } = await supabase.from("books").delete().eq("book_id", id);
+    const { error } = await appwriteStore.from("books").delete().eq("book_id", id);
     if (error) toast.error(error.message); else qc.invalidateQueries();
   }
 
@@ -74,7 +74,7 @@ function EditBook({ book, onDone }: { book: { book_id: string; title: string; au
   const [f, setF] = useState({ title: book.title, author: book.author, category: book.category, availability: book.availability });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("books").update({ title: f.title.trim(), author: f.author.trim(), category: f.category.trim(), availability: f.availability }).eq("book_id", book.book_id);
+    const { error } = await appwriteStore.from("books").update({ title: f.title.trim(), author: f.author.trim(), category: f.category.trim(), availability: f.availability }).eq("book_id", book.book_id);
     if (error) { toast.error(error.message); return; }
     toast.success("Book details updated"); setOpen(false); onDone();
   }
@@ -98,7 +98,7 @@ function AddBook({ onDone }: { onDone: () => void }) {
   const [f, setF] = useState({ title: "", author: "", category: "" });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { data, error } = await supabase.from("books").insert({ ...f, book_id: "" }).select("book_id").single();
+    const { data, error } = await appwriteStore.from("books").insert({ ...f, book_id: "" }).select("book_id").single();
     if (error || !data) { toast.error(error?.message ?? "Could not save"); return; }
     toast.success(`Book added as ${data.book_id}`); setOpen(false); onDone(); setF({ title: "", author: "", category: "" });
   }

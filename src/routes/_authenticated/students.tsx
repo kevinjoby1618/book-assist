@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera as CamIcon, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { appwriteStore } from "@/integrations/appwrite/client";
 import { studentsQuery } from "@/lib/library";
 import { Camera, type CameraHandle } from "@/components/Camera";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ function StudentsPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this student and their history?")) return;
-    const { error } = await supabase.from("students").delete().eq("student_id", id);
+    const { error } = await appwriteStore.from("students").delete().eq("student_id", id);
     if (error) toast.error(error.message); else { toast.success("Student deleted"); qc.invalidateQueries(); }
   }
 
@@ -67,7 +67,7 @@ function EditStudent({ student, onDone }: { student: { student_id: string; name:
   const [f, setF] = useState({ name: student.name, class: student.class, section: student.section });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("students").update({ name: f.name.trim(), class: f.class.trim(), section: f.section.trim() }).eq("student_id", student.student_id);
+    const { error } = await appwriteStore.from("students").update({ name: f.name.trim(), class: f.class.trim(), section: f.section.trim() }).eq("student_id", student.student_id);
     if (error) { toast.error(error.message); return; }
     toast.success("Student details updated"); setOpen(false); onDone();
   }
@@ -92,7 +92,7 @@ function AddStudent({ onDone }: { onDone: (id: string) => void }) {
   const [f, setF] = useState({ name: "", class: "", section: "" });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { data, error } = await supabase.from("students").insert({ ...f, student_id: "" }).select("student_id").single();
+    const { data, error } = await appwriteStore.from("students").insert({ ...f, student_id: "" }).select("student_id").single();
     if (error || !data) { toast.error(error?.message ?? "Could not save"); return; }
     toast.success(`Student registered as ${data.student_id} — now capture their face`);
     setOpen(false); onDone(data.student_id); setF({ name: "", class: "", section: "" });
@@ -147,7 +147,7 @@ function FaceDialog({ studentId, onClose, onSaved }: { studentId: string | null;
   async function save() {
     if (!shot || !studentId) return;
     setBusy(true);
-    const { error } = await supabase.from("students").update({ face_image: shot }).eq("student_id", studentId);
+    const { error } = await appwriteStore.from("students").update({ face_image: shot }).eq("student_id", studentId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Face registered"); setShot(null); onSaved(); onClose();

@@ -17,6 +17,11 @@ function LibrarianDesk() {
     window.location.assign(`/scan?desk=1&mode=${mode}`);
   }
 
+  function closeDesk() {
+    window.close();
+    if (!window.closed) window.location.assign("/dashboard");
+  }
+
   return (
     <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col justify-center gap-8">
       <header className="text-center">
@@ -37,9 +42,9 @@ function LibrarianDesk() {
         </Button>
       </div>
       <div className="flex justify-center">
-        <Button variant="ghost" onClick={() => { window.close(); if (!window.closed) window.location.assign("/dashboard"); }}>Close desk</Button>
+        <Button variant="ghost" onClick={closeDesk}>Close desk</Button>
       </div>
-      <p className="text-center text-xs text-muted-foreground">This desk is available only while you are signed in as a librarian.</p>
+      <p className="text-center text-xs text-muted-foreground">Available only while signed in as a librarian.</p>
     </main>
   );
 }
