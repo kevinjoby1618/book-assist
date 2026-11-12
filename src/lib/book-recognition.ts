@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { appwriteStore } from "@/integrations/appwrite/client";
 
 type Book = {
   book_id: string;
