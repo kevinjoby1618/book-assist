@@ -36,6 +36,9 @@ function LibrarianDesk() {
           Return Book
         </Button>
       </div>
+      <div className="flex justify-center">
+        <Button variant="ghost" onClick={() => { window.close(); if (!window.closed) window.location.assign("/dashboard"); }}>Close desk</Button>
+      </div>
       <p className="text-center text-xs text-muted-foreground">This desk is available only while you are signed in as a librarian.</p>
     </main>
   );
