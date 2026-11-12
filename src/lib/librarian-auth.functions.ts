@@ -5,9 +5,9 @@ export async function signUpLibrarian(input: { data: { email: string; name: stri
   const email = input.data.email.trim().toLowerCase();
   const name = input.data.name.trim();
   const pin = input.data.pin;
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error("Please enter a valid email");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Please enter a valid email");
   if (!name || name.length > 100) throw new Error("Please enter a librarian name (up to 100 characters)");
-  if (!/^\\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
+  if (!/^\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
 
   const user = await account.create({ userId: ID.unique(), email, password: `lib-pin-${pin}`, name });
   await account.createEmailPasswordSession({ email, password: `lib-pin-${pin}` });
@@ -22,7 +22,7 @@ export async function signUpLibrarian(input: { data: { email: string; name: stri
       queries: [Query.limit(500)],
     });
     const highest = existing.rows.reduce((max, row: any) => {
-      const match = /^L(\\d+)$/.exec(String(row.code ?? ""));
+      const match = /^L(\d+)$/.exec(String(row.code ?? ""));
       return match ? Math.max(max, Number(match[1])) : max;
     }, 0);
     code = `L${String(highest + 1).padStart(3, "0")}`;
