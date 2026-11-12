@@ -66,8 +66,8 @@ function AuthPage() {
           <h2 className="text-3xl font-bold">Account created</h2>
           <p className="text-muted-foreground">Your librarian code is</p>
           <p className="font-mono text-5xl font-bold text-accent">{newCode || "—"}</p>
-          <p className="text-sm text-muted-foreground">Write it down for your records. Sign in with your email and PIN.</p>
-          <Button className="w-full" onClick={() => { setNewCode(null); setMode("in"); setCode(code.trim()); setPin(""); }}>Go to sign in</Button>
+          <p className="text-sm text-muted-foreground">Save it for your records. Your account is ready to use.</p>
+          <Button className="w-full" onClick={() => navigate({ to: "/dashboard" })}>Continue to Book Assist</Button>
         </div>
       </div>
     );
