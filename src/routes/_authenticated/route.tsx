@@ -37,6 +37,8 @@ function AppShell() {
     navigate({ to: "/" });
   }
 
+  if (deskWindow) return <main className="min-h-screen p-5 md:p-8"><Outlet /></main>;
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar text-sidebar-foreground md:w-60 md:border-b-0 md:border-r">
