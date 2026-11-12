@@ -1,28 +1,31 @@
 # Book Assist
 
-Book Assist is a TanStack Start + React application using Supabase for authentication and data.
+Book Assist is a TanStack Start + React library-management application powered by Appwrite.
 
-## Requirements
+## Backend
 
-- Node.js (current LTS)
-- npm
-- A Supabase project with the app's database schema and authentication configured
+The application uses Appwrite for:
+- Email/password authentication
+- Librarian profiles and codes
+- Books, students, and transaction records
+- Private per-user database permissions
+- Student face-image records
 
-## Environment variables
+## Appwrite project configuration
 
-Create a local `.env` or `.env.local` file from `.env.example` and set:
+Set these public build-time variables:
 
-- `VITE_SUPABASE_URL`: your Supabase project's Project URL (browser/client)
-- `VITE_SUPABASE_PUBLISHABLE_KEY`: your Supabase publishable key (starts with `sb_publishable_`)
+- `VITE_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1`
+- `VITE_APPWRITE_PROJECT_ID=6af5898800380ce90092`
 
-For server-side requests, also set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to the same project URL and publishable key. Do not put a Supabase secret/service-role key in any `VITE_*` variable or expose it in client code.
+The Appwrite project must contain the `book_assist_db` database with the `librarians`, `books`, `students`, and `transactions` tables. Student face images are stored in the private `face_image` database field.
 
-In Vercel, add the same variables under **Project → Settings → Environment Variables** for Production, Preview, and Development as needed. Redeploy after changing environment variables.
+Do not add an Appwrite API key to any `VITE_*` variable or browser code.
 
 ## Development
 
 ```sh
-npm ci
+npm install
 npm run dev
 ```
 
@@ -32,4 +35,4 @@ npm run dev
 npm run build
 ```
 
-The Vercel project should use the repository's production branch (`main`) and the project name `book-assist`. Ensure the Supabase project is initialized and required environment variables are set before expecting the deployed app to work.
+The Appwrite Site uses the `appwrite-migration` branch, Node.js 22, and the Nitro output directory `.output`.
