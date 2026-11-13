@@ -21,6 +21,7 @@ const DESK_LOCK_KEY = "book-assist-student-desk-lock";
 function StudentDesk() {
   const navigate = useNavigate();
   const [showClose, setShowClose] = useState(false);
+  const [librarianCode, setLibrarianCode] = useState("");
   const [pin, setPin] = useState("");
   const [checking, setChecking] = useState(false);
 
@@ -30,33 +31,37 @@ function StudentDesk() {
 
   async function closeDesk(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!/^\d{4}$/.test(pin)) {
-      toast.error("Enter the librarian's 4-digit PIN.");
+    const code = librarianCode.trim().toUpperCase();
+    if (!/^L\d{3,6}$/.test(code) || !/^\d{4}$/.test(pin)) {
+      toast.error("Enter a valid librarian code and 4-digit PIN.");
       return;
     }
+
     setChecking(true);
-    const { data } = await supabaseStore.auth.getUser();
-    if (!data.user?.email) {
-      setChecking(false);
-      toast.error("Librarian session not found. Ask the librarian to sign in again.");
-      return;
-    }
-    const { error } = await supabaseStore.auth.signInWithPassword({
-      email: data.user.email,
-      password: \`lib-pin-\${pin}\`,
+    const { data, error } = await supabaseStore.functions.invoke("librarian-auth", {
+      body: { code, pin },
     });
-    setChecking(false);
-    if (error) {
-      toast.error("Incorrect librarian PIN. The student desk is still open.");
+    if (error || !data?.session) {
+      setChecking(false);
+      toast.error(data?.error || "Incorrect librarian code or PIN. The student desk is still open.");
       setPin("");
       return;
     }
-    // Unlock librarian pages only after the PIN has been verified successfully.
+
+    const { error: sessionError } = await supabaseStore.auth.setSession(data.session);
+    setChecking(false);
+    if (sessionError) {
+      toast.error("Could not restore the librarian session. Please try again.");
+      return;
+    }
+
+    // Restore the authenticated librarian shell only after code + PIN verification.
     window.sessionStorage.removeItem(DESK_LOCK_KEY);
-    navigate({ to: "/dashboard", replace: true });
     setShowClose(false);
+    setLibrarianCode("");
     setPin("");
-    toast.success("PIN verified. Librarian features are now enabled.");
+    navigate({ to: "/dashboard", replace: true });
+    toast.success("Librarian verified. Dashboard and sidebar restored.");
   }
 
   return (
@@ -86,9 +91,15 @@ function StudentDesk() {
         ) : (
           <form onSubmit={closeDesk} className="w-full max-w-sm space-y-3 rounded-xl border bg-card p-4">
             <p className="text-center font-semibold">Librarian verification</p>
-            <p className="text-center text-sm text-muted-foreground">Enter your 4-digit PIN to unlock librarian features and return to the dashboard.</p>
+            <p className="text-center text-sm text-muted-foreground">Enter your librarian code and 4-digit PIN to restore the dashboard and sidebar.</p>
             <Input
               autoFocus
+              autoComplete="off"
+              placeholder="Librarian code (e.g. L1234)"
+              value={librarianCode}
+              onChange={(event) => setLibrarianCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7))}
+            />
+            <Input
               type="password"
               inputMode="numeric"
               maxLength={4}
@@ -97,17 +108,17 @@ function StudentDesk() {
               onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
             />
             <div className="flex gap-2">
-              <Button type="submit" className="flex-1" disabled={checking || pin.length !== 4}>
-                {checking ? "Verifying…" : "Verify & unlock"}
+              <Button type="submit" className="flex-1" disabled={checking || !/^L\d{3,6}$/.test(librarianCode.trim().toUpperCase()) || pin.length !== 4}>
+                {checking ? "Verifying…" : "Verify & restore"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => { setShowClose(false); setPin(""); }}>
+              <Button type="button" variant="outline" onClick={() => { setShowClose(false); setLibrarianCode(""); setPin(""); }}>
                 Cancel
               </Button>
             </div>
           </form>
         )}
       </div>
-      <p className="text-center text-xs text-muted-foreground">Librarian tools stay locked while the student desk is open. Enter the librarian PIN to return to the dashboard and restore access.</p>
+      <p className="text-center text-xs text-muted-foreground">Librarian tools stay locked while the student desk is open. Enter the librarian code and PIN to restore the librarian dashboard.</p>
     </main>
   );
 }
