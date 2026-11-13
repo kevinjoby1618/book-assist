@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { History, LayoutDashboard, LogOut, ScanLine, Users, Library, Settings } from "lucide-react";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await appwriteStore.auth.getUser();
+    const { data, error } = await supabaseStore.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/" });
     return { user: data.user };
   },
@@ -31,7 +31,7 @@ function AppShell() {
   const deskWindow = location.pathname === "/desk" || new URLSearchParams(location.searchStr).get("desk") === "1";
 
   async function signOut() {
-    await appwriteStore.auth.signOut();
+    await supabaseStore.auth.signOut();
     // Prevent cached records from one librarian being displayed after another signs in.
     queryClient.clear();
     navigate({ to: "/" });
@@ -69,7 +69,7 @@ function AppShell() {
 function MyCode() {
   const [profile, setProfile] = useState<{ name: string; code: string } | null>(null);
   useEffect(() => {
-    appwriteStore.from("librarians").select("name, code").maybeSingle().then(({ data }) => {
+    supabaseStore.from("librarians").select("name, code").maybeSingle().then(({ data }) => {
       if (data) setProfile({ name: data.name?.trim() ?? "", code: data.code });
     });
   }, []);

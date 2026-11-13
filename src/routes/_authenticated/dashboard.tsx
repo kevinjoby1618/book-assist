@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BookCheck, BookOpen, ExternalLink, ScanLine, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const [librarianName, setLibrarianName] = useState("");
   useEffect(() => {
-    appwriteStore.from("librarians").select("name").maybeSingle().then(({ data }) => {
+    supabaseStore.from("librarians").select("name").maybeSingle().then(({ data }) => {
       const name = data?.name?.trim() ?? "";
       setLibrarianName(name);
     });

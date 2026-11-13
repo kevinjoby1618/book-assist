@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { recognizeBook } from "@/lib/book-recognition";
 import { matchFace } from "@/lib/face-recognition";
 import { studentsQuery } from "@/lib/library";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/scan")({
@@ -81,7 +81,7 @@ function ScanPage() {
   async function confirm() {
     if (!student || !book) return;
     setBusy(true);
-    const { error } = await appwriteStore.rpc(mode === "issue" ? "issue_book" : "return_book", { _student_id: student.student_id, _book_id: book.book_id });
+    const { error } = await supabaseStore.rpc(mode === "issue" ? "issue_book" : "return_book", { _student_id: student.student_id, _book_id: book.book_id });
     setBusy(false);
     qc.invalidateQueries();
     if (error) { setResult({ ok: false, msg: error.message }); toast.error(error.message); }

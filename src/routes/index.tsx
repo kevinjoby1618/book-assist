@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, ScanFace, ScanLine } from "lucide-react";
 import { toast } from "sonner";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 import { signUpLibrarian } from "@/lib/librarian-auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ function AuthPage() {
   const [newCode, setNewCode] = useState<string | null>(null);
 
   useEffect(() => {
-    appwriteStore.auth.getSession().then(({ data }) => {
+    supabaseStore.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
@@ -44,7 +44,7 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "in") {
-        const { error } = await appwriteStore.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
+        const { error } = await supabaseStore.auth.signInWithPassword({ email: id.toLowerCase(), password: `lib-pin-${pin}` });
         if (error) throw new Error("Wrong email or PIN");
         navigate({ to: "/dashboard" });
       } else {

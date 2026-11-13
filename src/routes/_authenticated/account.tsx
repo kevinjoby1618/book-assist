@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/account")({
   head: () => ({ meta: [{ title: "Account — Book Assist" }] }),
@@ -23,9 +23,9 @@ function AccountPage() {
   useEffect(() => {
     let active = true;
     async function loadProfile() {
-      const { data: { user } } = await appwriteStore.auth.getUser();
+      const { data: { user } } = await supabaseStore.auth.getUser();
       if (!user) { navigate({ to: "/" }); return; }
-      const { data, error } = await appwriteStore
+      const { data, error } = await supabaseStore
         .from("librarians")
         .select("name, email, code")
         .eq("user_id", user.id)
@@ -49,9 +49,9 @@ function AccountPage() {
     }
     setSaving(true);
     try {
-      const { data: { user } } = await appwriteStore.auth.getUser();
+      const { data: { user } } = await supabaseStore.auth.getUser();
       if (!user) throw new Error("Please sign in again");
-      const { error } = await appwriteStore.from("librarians").update({ name: cleanName }).eq("user_id", user.id);
+      const { error } = await supabaseStore.from("librarians").update({ name: cleanName }).eq("user_id", user.id);
       if (error) throw error;
       setName(cleanName);
       toast.success("Your name has been updated");
@@ -63,7 +63,7 @@ function AccountPage() {
   }
 
   async function signOut() {
-    await appwriteStore.auth.signOut();
+    await supabaseStore.auth.signOut();
     await navigate({ to: "/" });
   }
 

@@ -4,7 +4,7 @@ import { BookDown, BookPlus, LibraryBig, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/desk")({
   head: () => ({
@@ -32,13 +32,13 @@ function StudentDesk() {
       return;
     }
     setChecking(true);
-    const { data } = await appwriteStore.auth.getUser();
+    const { data } = await supabaseStore.auth.getUser();
     if (!data.user?.email) {
       setChecking(false);
       toast.error("Librarian session not found. Ask the librarian to sign in again.");
       return;
     }
-    const { error } = await appwriteStore.auth.signInWithPassword({
+    const { error } = await supabaseStore.auth.signInWithPassword({
       email: data.user.email,
       password: `lib-pin-${pin}`,
     });

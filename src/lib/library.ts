@@ -1,10 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
-import { appwriteStore } from "@/integrations/appwrite/client";
+import { supabaseStore } from "@/integrations/supabase/client";
 
 export const studentsQuery = queryOptions({
   queryKey: ["students"],
   queryFn: async () => {
-    const { data, error } = await appwriteStore.from("students").select("student_id, name, class, section, face_image, created_at").order("student_id");
+    const { data, error } = await supabaseStore.from("students").select("student_id, name, class, section, face_image, created_at").order("student_id");
     if (error) throw error;
     return data;
   },
@@ -13,7 +13,7 @@ export const studentsQuery = queryOptions({
 export const booksQuery = queryOptions({
   queryKey: ["books"],
   queryFn: async () => {
-    const { data, error } = await appwriteStore.from("books").select("*").order("book_id");
+    const { data, error } = await supabaseStore.from("books").select("*").order("book_id");
     if (error) throw error;
     return data;
   },
@@ -22,7 +22,7 @@ export const booksQuery = queryOptions({
 export const transactionsQuery = queryOptions({
   queryKey: ["transactions"],
   queryFn: async () => {
-    const { data, error } = await appwriteStore.from("transactions").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabaseStore.from("transactions").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     return data;
   },
