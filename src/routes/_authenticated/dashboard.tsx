@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabaseStore } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BookCheck, BookOpen, ExternalLink, ScanLine, Users } from "lucide-react";
+import { AlertTriangle, BookCheck, BookOpen, ScanLine, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { booksQuery, isOverdue, studentsQuery, transactionsQuery } from "@/lib/library";
 
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [librarianName, setLibrarianName] = useState("");
   useEffect(() => {
     supabaseStore.from("librarians").select("name").maybeSingle().then(({ data }) => {
@@ -25,8 +26,7 @@ function Dashboard() {
   const issued = books.filter((b) => b.availability === "Issued").length;
   const overdue = tx.filter(isOverdue).length;
   function openLibrarianDesk() {
-    const popup = window.open("/desk", "book-assist-librarian-desk", "popup=yes,width=1100,height=760,resizable=yes");
-    popup?.focus();
+    navigate({ to: "/desk" });
   }
   const stats = [
     { label: "Books", value: books.length, icon: BookOpen },
@@ -41,7 +41,7 @@ function Dashboard() {
           <h1 className="text-3xl font-bold text-primary md:text-4xl">{librarianName ? `Welcome, ${librarianName}!` : "Good to see you at the desk."}</h1>
           <p className="mt-2 text-muted-foreground">Start a scan: the student shows their face, then the book.</p>
         </div>
-        <div className="flex flex-wrap gap-3"><Button size="lg" onClick={openLibrarianDesk}><ExternalLink className="mr-2 h-5 w-5" /> Open librarian desk</Button><Button asChild size="lg" variant="secondary"><Link to="/scan"><ScanLine className="mr-2 h-5 w-5" /> Start scanning</Link></Button></div>
+        <div className="flex flex-wrap gap-3"><Button size="lg" onClick={openLibrarianDesk}>Open student desk</Button><Button asChild size="lg" variant="secondary"><Link to="/scan"><ScanLine className="mr-2 h-5 w-5" /> Start scanning</Link></Button></div>
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((s) => (
