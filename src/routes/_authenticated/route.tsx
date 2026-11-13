@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { History, LayoutDashboard, LogOut, ScanLine, Users, Library, Settings } from "lucide-react";
 import { supabaseStore } from "@/integrations/supabase/client";
@@ -27,16 +27,12 @@ const nav = [
 function AppShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const location = useRouterState({ select: (state) => state.location });
-  const deskWindow = location.pathname === "/desk" || new URLSearchParams(location.searchStr).get("desk") === "1";
 
   async function signOut() {
     await supabaseStore.auth.signOut();
     queryClient.clear();
     navigate({ to: "/" });
   }
-
-  if (deskWindow) return <main className="min-h-screen p-5 md:p-8"><Outlet /></main>;
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
