@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/desk")({
   component: StudentDesk,
 });
 
+const DESK_LOCK_KEY = "book-assist-student-desk-lock";
+
 function StudentDesk() {
   const navigate = useNavigate();
   const [showClose, setShowClose] = useState(false);
@@ -41,7 +43,7 @@ function StudentDesk() {
     }
     const { error } = await supabaseStore.auth.signInWithPassword({
       email: data.user.email,
-      password: `lib-pin-${pin}`,
+      password: \`lib-pin-\${pin}\`,
     });
     setChecking(false);
     if (error) {
@@ -49,14 +51,16 @@ function StudentDesk() {
       setPin("");
       return;
     }
-    navigate({ to: "/dashboard" });
+    // Unlock librarian pages only after the PIN has been verified successfully.
+    window.sessionStorage.removeItem(DESK_LOCK_KEY);
+    navigate({ to: "/dashboard", replace: true });
     setShowClose(false);
     setPin("");
-    toast.success("PIN verified. You are back at the librarian dashboard.");
+    toast.success("PIN verified. Librarian features are now enabled.");
   }
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col justify-center gap-8">
+    <main className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-3xl flex-col justify-center gap-8">
       <header className="text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <LibraryBig className="h-7 w-7" />
@@ -77,12 +81,12 @@ function StudentDesk() {
       <div className="flex justify-center">
         {!showClose ? (
           <Button variant="ghost" onClick={() => setShowClose(true)}>
-            <LockKeyhole className="mr-2 h-4 w-4" /> Librarian: close student desk
+            <LockKeyhole className="mr-2 h-4 w-4" /> Librarian: unlock dashboard
           </Button>
         ) : (
           <form onSubmit={closeDesk} className="w-full max-w-sm space-y-3 rounded-xl border bg-card p-4">
             <p className="text-center font-semibold">Librarian verification</p>
-            <p className="text-center text-sm text-muted-foreground">Enter your 4-digit PIN to return to the librarian dashboard.</p>
+            <p className="text-center text-sm text-muted-foreground">Enter your 4-digit PIN to unlock librarian features and return to the dashboard.</p>
             <Input
               autoFocus
               type="password"
@@ -94,7 +98,7 @@ function StudentDesk() {
             />
             <div className="flex gap-2">
               <Button type="submit" className="flex-1" disabled={checking || pin.length !== 4}>
-                {checking ? "Verifying…" : "Verify & return"}
+                {checking ? "Verifying…" : "Verify & unlock"}
               </Button>
               <Button type="button" variant="outline" onClick={() => { setShowClose(false); setPin(""); }}>
                 Cancel
@@ -103,7 +107,7 @@ function StudentDesk() {
           </form>
         )}
       </div>
-      <p className="text-center text-xs text-muted-foreground">This window is for student issue and return transactions. Only a librarian with the PIN can return to the librarian dashboard.</p>
+      <p className="text-center text-xs text-muted-foreground">Librarian tools stay locked while the student desk is open. Enter the librarian PIN to return to the dashboard and restore access.</p>
     </main>
   );
 }
