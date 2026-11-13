@@ -41,11 +41,11 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
-    if (!/^\\d{4}$/.test(pin)) { toast.error("PIN must be exactly 4 digits"); return; }
+    if (!/^\d{4}$/.test(pin)) { toast.error("PIN must be exactly 4 digits"); return; }
     setBusy(true);
     try {
       if (mode === "in") {
-        const { error } = await supabaseStore.auth.signInWithPassword({ email: cleanEmail, password: `lib-pin-${pin}` });
+        const { error } = await supabaseStore.auth.signInWithPassword({ email: cleanEmail, password: "lib-pin-" + pin });
         if (error) {
           if (error.message.toLowerCase().includes("email not confirmed")) {
             throw new Error("Please confirm your email using the link sent to your inbox, then sign in again.");
@@ -108,7 +108,7 @@ function AuthPage() {
           </div>
           {mode === "up" && <div className="space-y-2"><Label htmlFor="librarianName">Librarian name</Label><Input id="librarianName" required autoComplete="name" placeholder="Your full name" value={librarianName} onChange={(e) => setLibrarianName(e.target.value)} /></div>}
           <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoComplete="username" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="pin">PIN</Label><Input id="pin" type="password" inputMode="numeric" required maxLength={4} pattern="\\d{4}" placeholder="••••" className="tracking-[0.5em]" value={pin} onChange={(e) => setPin(e.target.value.replace(/\\D/g, "").slice(0, 4))} /></div>
+          <div className="space-y-2"><Label htmlFor="pin">PIN</Label><Input id="pin" type="password" inputMode="numeric" required maxLength={4} pattern="\d{4}" placeholder="••••" className="tracking-[0.5em]" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} /></div>
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}</Button>
           <Button variant="link" type="button" onClick={() => setMode(mode === "in" ? "up" : "in")} className="w-full text-muted-foreground hover:text-foreground">
             {mode === "in" ? "No account? Create one" : "Have an account? Sign in"}
