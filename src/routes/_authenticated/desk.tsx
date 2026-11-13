@@ -25,7 +25,9 @@ function StudentDesk() {
   const [checking, setChecking] = useState(false);
 
   function start(mode: "issue" | "return") {
-    navigate({ to: "/scan", search: { desk: "1", mode } });
+    // Use a full route navigation so the scan page always receives its student mode
+    // and selected action, even if the client router has stale search state.
+    window.location.assign(`/scan?desk=1&mode=${mode}`);
   }
 
   async function closeDesk(event: React.FormEvent<HTMLFormElement>) {
