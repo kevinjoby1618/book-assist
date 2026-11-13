@@ -22,7 +22,7 @@ function BooksPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"All" | "Available" | "Issued">("All");
   const list = books.filter((b) => (filter === "All" || b.availability === filter) &&
-    `${b.book_id} ${b.title} ${b.author} ${b.category}`.toLowerCase().includes(q.toLowerCase()));
+    `${b.book_id} ${b.title} ${b.author} ${b.category} ${b.shelf_name ?? ""}`.toLowerCase().includes(q.toLowerCase()));
 
   async function remove(id: string) {
     if (!confirm("Delete this book?")) return;
@@ -47,7 +47,7 @@ function BooksPage() {
       <div className="overflow-x-auto rounded-xl bg-card shadow-card">
         <table className="w-full text-sm">
           <thead className="border-b text-left text-muted-foreground"><tr>
-            <th className="p-3">ID</th><th className="p-3">Title</th><th className="p-3">Author</th><th className="p-3">Category</th><th className="p-3">Status</th><th />
+            <th className="p-3">ID</th><th className="p-3">Title</th><th className="p-3">Author</th><th className="p-3">Category</th><th className="p-3">Shelf</th><th className="p-3">Status</th><th />
           </tr></thead>
           <tbody>
             {list.map((b) => (
@@ -56,6 +56,7 @@ function BooksPage() {
                 <td className="p-3 font-medium">{b.title}</td>
                 <td className="p-3">{b.author}</td>
                 <td className="p-3">{b.category}</td>
+                <td className="p-3 font-mono text-xs">{b.shelf_name || "—"}</td>
                 <td className="p-3"><span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", b.availability === "Available" ? "bg-success/15 text-success" : "bg-accent/25 text-accent-foreground")}>{b.availability}</span></td>
                 <td className="p-3 text-right whitespace-nowrap"><EditBook book={{ ...b, availability: b.availability === "Issued" ? "Issued" : "Available" }} onDone={() => qc.invalidateQueries()} /><Button variant="ghost" size="icon" onClick={() => remove(b.book_id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete book"><Trash2 className="h-4 w-4" /></Button></td>
               </tr>
@@ -69,22 +70,22 @@ function BooksPage() {
 }
 
 
-function EditBook({ book, onDone }: { book: { book_id: string; title: string; author: string; category: string; availability: "Available" | "Issued" }; onDone: () => void }) {
+function EditBook({ book, onDone }: { book: { book_id: string; title: string; author: string; category: string; shelf_name?: string; availability: "Available" | "Issued" }; onDone: () => void }) {
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ title: book.title, author: book.author, category: book.category, availability: book.availability });
+  const [f, setF] = useState({ title: book.title, author: book.author, category: book.category, shelf_name: book.shelf_name ?? "", availability: book.availability });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabaseStore.from("books").update({ title: f.title.trim(), author: f.author.trim(), category: f.category.trim(), availability: f.availability }).eq("book_id", book.book_id);
+    const { error } = await supabaseStore.from("books").update({ title: f.title.trim(), author: f.author.trim(), category: f.category.trim(), shelf_name: f.shelf_name.trim().toUpperCase(), availability: f.availability }).eq("book_id", book.book_id);
     if (error) { toast.error(error.message); return; }
     toast.success("Book details updated"); setOpen(false); onDone();
   }
   return (
-    <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) setF({ title: book.title, author: book.author, category: book.category, availability: book.availability }); }}>
+    <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (value) setF({ title: book.title, author: book.author, category: book.category, shelf_name: book.shelf_name ?? "", availability: book.availability }); }}>
       <DialogTrigger asChild><Button variant="ghost" size="icon" aria-label="Edit book"><Pencil className="h-4 w-4" /></Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Edit book · {book.book_id}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          {(["title", "author", "category"] as const).map((key) => <div key={key} className="space-y-1"><Label className="capitalize">{key}</Label><Input required={key !== "category"} value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} /></div>)}
+          {(["title", "author", "category", "shelf_name"] as const).map((key) => <div key={key} className="space-y-1"><Label className="capitalize">{key}</Label><Input required={key !== "category"} value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} /></div>)}
           <div className="space-y-1"><Label>Status</Label><select className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={f.availability} onChange={(e) => setF({ ...f, availability: e.target.value as "Available" | "Issued" })}><option value="Available">Available</option><option value="Issued">Issued</option></select></div>
           <Button type="submit" className="w-full">Save changes</Button>
         </form>
@@ -95,12 +96,12 @@ function EditBook({ book, onDone }: { book: { book_id: string; title: string; au
 
 function AddBook({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ title: "", author: "", category: "" });
+  const [f, setF] = useState({ title: "", author: "", category: "", shelf_name: "" });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { data, error } = await supabaseStore.from("books").insert({ ...f, book_id: "" }).select("book_id").single();
+    const { data, error } = await supabaseStore.from("books").insert({ ...f, shelf_name: f.shelf_name.trim().toUpperCase(), book_id: "" }).select("book_id").single();
     if (error || !data) { toast.error(error?.message ?? "Could not save"); return; }
-    toast.success(`Book added as ${data.book_id}`); setOpen(false); onDone(); setF({ title: "", author: "", category: "" });
+    toast.success(`Book added as ${data.book_id}`); setOpen(false); onDone(); setF({ title: "", author: "", category: "", shelf_name: "" });
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -109,9 +110,9 @@ function AddBook({ onDone }: { onDone: () => void }) {
         <DialogHeader><DialogTitle>Add book</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <p className="text-xs text-muted-foreground">The book code is created automatically.</p>
-          {(["title", "author", "category"] as const).map((k) => (
-            <div key={k} className="space-y-1"><Label className="capitalize">{k}</Label>
-              <Input required={k !== "category"} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} /></div>
+          {(["title", "author", "category", "shelf_name"] as const).map((k) => (
+            <div key={k} className="space-y-1"><Label>{k === "shelf_name" ? "Shelf name / location" : k.charAt(0).toUpperCase() + k.slice(1)}</Label>
+              <Input placeholder={k === "shelf_name" ? "e.g. A01, A02, B01" : undefined} required={k !== "category" && k !== "shelf_name"} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} /></div>
           ))}
           <Button type="submit" className="w-full">Save book</Button>
         </form>
