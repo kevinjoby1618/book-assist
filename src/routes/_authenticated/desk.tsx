@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BookDown, BookPlus, LibraryBig, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,13 @@ export const Route = createFileRoute("/_authenticated/desk")({
 });
 
 function StudentDesk() {
+  const navigate = useNavigate();
   const [showClose, setShowClose] = useState(false);
   const [pin, setPin] = useState("");
   const [checking, setChecking] = useState(false);
 
   function start(mode: "issue" | "return") {
-    window.location.assign(`/scan?desk=1&mode=${mode}`);
+    navigate({ to: "/scan", search: { desk: "1", mode } });
   }
 
   async function closeDesk(event: React.FormEvent<HTMLFormElement>) {
@@ -48,10 +49,10 @@ function StudentDesk() {
       setPin("");
       return;
     }
-    window.close();
+    navigate({ to: "/dashboard" });
     setShowClose(false);
     setPin("");
-    toast.success("PIN verified. You can close this student window.");
+    toast.success("PIN verified. You are back at the librarian dashboard.");
   }
 
   return (
@@ -81,7 +82,7 @@ function StudentDesk() {
         ) : (
           <form onSubmit={closeDesk} className="w-full max-w-sm space-y-3 rounded-xl border bg-card p-4">
             <p className="text-center font-semibold">Librarian verification</p>
-            <p className="text-center text-sm text-muted-foreground">Enter your 4-digit PIN to close this window.</p>
+            <p className="text-center text-sm text-muted-foreground">Enter your 4-digit PIN to return to the librarian dashboard.</p>
             <Input
               autoFocus
               type="password"
@@ -93,7 +94,7 @@ function StudentDesk() {
             />
             <div className="flex gap-2">
               <Button type="submit" className="flex-1" disabled={checking || pin.length !== 4}>
-                {checking ? "Verifying…" : "Verify & close"}
+                {checking ? "Verifying…" : "Verify & return"}
               </Button>
               <Button type="button" variant="outline" onClick={() => { setShowClose(false); setPin(""); }}>
                 Cancel
@@ -102,7 +103,7 @@ function StudentDesk() {
           </form>
         )}
       </div>
-      <p className="text-center text-xs text-muted-foreground">This window is for student issue and return transactions. Only a librarian with the PIN can use the in-app close control.</p>
+      <p className="text-center text-xs text-muted-foreground">This window is for student issue and return transactions. Only a librarian with the PIN can return to the librarian dashboard.</p>
     </main>
   );
 }
