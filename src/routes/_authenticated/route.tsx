@@ -32,7 +32,6 @@ function AppShell() {
 
   async function signOut() {
     await supabaseStore.auth.signOut();
-    // Prevent cached records from one librarian being displayed after another signs in.
     queryClient.clear();
     navigate({ to: "/" });
   }
@@ -69,9 +68,20 @@ function AppShell() {
 function MyCode() {
   const [profile, setProfile] = useState<{ name: string; code: string } | null>(null);
   useEffect(() => {
-    supabaseStore.from("librarians").select("name, code").maybeSingle().then(({ data }) => {
-      if (data) setProfile({ name: data.name?.trim() ?? "", code: data.code });
-    });
+    let active = true;
+    async function loadCode() {
+      const { data: { user }, error: authError } = await supabaseStore.auth.getUser();
+      if (authError || !user || !active) return;
+      const { data, error } = await supabaseStore
+        .from("librarians")
+        .select("name, code")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active || error || !data) return;
+      setProfile({ name: data.name?.trim() ?? "", code: data.code });
+    }
+    void loadCode();
+    return () => { active = false; };
   }, []);
   if (!profile) return null;
   return (
