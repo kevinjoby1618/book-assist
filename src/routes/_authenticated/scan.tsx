@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, CheckCircle2, Loader2, RotateCcw, ScanFace, ScanLine, XCircle } from "lucide-react";
@@ -21,6 +21,7 @@ type Book = { book_id: string; title: string; author: string; category: string; 
 type Step = "face" | "book" | "confirm" | "done";
 
 function ScanPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: registeredStudents, isLoading: studentsLoading } = useQuery(studentsQuery);
   const cam = useRef<CameraHandle>(null);
@@ -104,7 +105,7 @@ function ScanPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{mode === "issue" ? "Issue a book" : "Return a book"}</h1>
         {deskWindow ? (
-          <Button variant="outline" onClick={() => window.location.assign("/desk")}>Back to student desk</Button>
+          <Button variant="outline" onClick={() => navigate({ to: "/desk" })}>Back to student desk</Button>
         ) : (
           <div className="flex rounded-lg border border-border bg-secondary p-1">
             {(["issue", "return"] as const).map((m) => (
