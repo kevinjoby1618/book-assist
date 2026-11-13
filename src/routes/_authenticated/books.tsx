@@ -37,7 +37,7 @@ function BooksPage() {
         <AddBook onDone={() => qc.invalidateQueries()} />
       </div>
       <div className="flex flex-wrap gap-3">
-        <div className="relative w-full max-w-sm"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Search title, author, category" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <div className="relative w-full max-w-sm"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Search title, author, category, shelf" value={q} onChange={(e) => setQ(e.target.value)} /></div>
         <div className="flex rounded-lg bg-secondary p-1">
           {(["All", "Available", "Issued"] as const).map((f) => (
             <Button key={f} size="sm" variant={filter === f ? "default" : "ghost"} onClick={() => setFilter(f)}>{f}</Button>
@@ -85,7 +85,7 @@ function EditBook({ book, onDone }: { book: { book_id: string; title: string; au
       <DialogContent>
         <DialogHeader><DialogTitle>Edit book · {book.book_id}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          {(["title", "author", "category", "shelf_name"] as const).map((key) => <div key={key} className="space-y-1"><Label className="capitalize">{key}</Label><Input required={key !== "category"} value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} /></div>)}
+          {(["title", "author", "category", "shelf_name"] as const).map((key) => <div key={key} className="space-y-1"><Label>{key === "shelf_name" ? "Shelf name / location" : key.charAt(0).toUpperCase() + key.slice(1)}</Label><Input placeholder={key === "shelf_name" ? "e.g. A01, A02, B01" : undefined} required={key !== "category" && key !== "shelf_name"} value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} /></div>)}
           <div className="space-y-1"><Label>Status</Label><select className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={f.availability} onChange={(e) => setF({ ...f, availability: e.target.value as "Available" | "Issued" })}><option value="Available">Available</option><option value="Issued">Issued</option></select></div>
           <Button type="submit" className="w-full">Save changes</Button>
         </form>
