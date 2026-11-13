@@ -41,22 +41,18 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
-    if (!/^\d{4}$/.test(pin)) { toast.error("PIN must be exactly 4 digits"); return; }
+    if (!/^\d{4}$/.test(pin)) {
+      toast.error("PIN must be exactly 4 digits");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "in") {
-        const { error } = await supabaseStore.auth.signInWithPassword({ email: cleanEmail, password: "lib-pin-" + pin });
-        if (error) {
-          if (error.message.toLowerCase().includes("email not confirmed")) {
-            throw new Error("Please confirm your email using the link sent to your inbox, then sign in again.");
-          }
-          throw new Error("Wrong email or PIN");
-        }
+        await signInLibrarian({ data: { code, pin } });
         navigate({ to: "/dashboard" });
       } else {
         const res = await signUpLibrarian({ data: { email: cleanEmail, name: librarianName.trim(), pin } });
         setNewCode(res.code);
-        setNeedsConfirmation(!res.session);
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -72,8 +68,7 @@ function AuthPage() {
           <h2 className="text-3xl font-bold">Account created</h2>
           <p className="text-muted-foreground">Your librarian code is</p>
           <p className="font-mono text-5xl font-bold text-accent">{newCode}</p>
-          <p className="text-sm text-muted-foreground">Save this code for your records.</p>
-          <p className="text-sm text-muted-foreground">No email confirmation is required. Keep your code private and use it with your 4-digit PIN to sign in.</p>
+          <p className="text-sm text-muted-foreground">Save this code for your records. No email confirmation is required.</p>
           <Button className="w-full" onClick={() => navigate({ to: "/dashboard" })}>Continue to Book Assist</Button>
         </div>
       </div>
@@ -98,15 +93,34 @@ function AuthPage() {
         <form onSubmit={submit} className="w-full max-w-sm space-y-5">
           <div>
             <h2 className="text-3xl font-bold">{mode === "in" ? "Librarian sign in" : "Create librarian account"}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{mode === "in" ? "Enter your librarian code and 4-digit PIN." : "Enter your name, email, and choose a 4-digit PIN. Your librarian code will appear immediately."}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {mode === "in"
+                ? "Enter your librarian code and 4-digit PIN."
+                : "Enter your name, email, and choose a 4-digit PIN. Your librarian code will appear immediately."}
+            </p>
           </div>
-          {mode === "up" && <div className="space-y-2"><Label htmlFor="librarianName">Librarian name</Label><Input id="librarianName" required autoComplete="name" placeholder="Your full name" value={librarianName} onChange={(e) => setLibrarianName(e.target.value)} /></div>}
-          {mode === "in" ? (
-            <div className="space-y-2"><Label htmlFor="code">Librarian code</Label><Input id="code" required autoComplete="username" maxLength={7} placeholder="L000123" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^L0-9]/g, "").slice(0, 7))} /></div>
-          ) : (
-            <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoComplete="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          {mode === "up" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="librarianName">Librarian name</Label>
+                <Input id="librarianName" required autoComplete="name" placeholder="Your full name" value={librarianName} onChange={(e) => setLibrarianName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" required autoComplete="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            </>
           )}
-          <div className="space-y-2"><Label htmlFor="pin">PIN</Label><Input id="pin" type="password" inputMode="numeric" required maxLength={4} pattern="\d{4}" placeholder="••••" className="tracking-[0.5em]" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} /></div>
+          {mode === "in" && (
+            <div className="space-y-2">
+              <Label htmlFor="code">Librarian code</Label>
+              <Input id="code" required autoComplete="username" maxLength={7} placeholder="L000123" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^L0-9]/g, "").slice(0, 7))} />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="pin">PIN</Label>
+            <Input id="pin" type="password" inputMode="numeric" required maxLength={4} pattern="\d{4}" placeholder="••••" className="tracking-[0.5em]" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+          </div>
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}</Button>
           <Button variant="link" type="button" onClick={() => { setMode(mode === "in" ? "up" : "in"); setPin(""); setCode(""); }} className="w-full text-muted-foreground hover:text-foreground">
             {mode === "in" ? "No account? Create one" : "Have an account? Sign in"}
