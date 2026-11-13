@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { History, LayoutDashboard, LogOut, ScanLine, Users, Library, Settings } from "lucide-react";
 import { supabaseStore } from "@/integrations/supabase/client";
@@ -24,39 +24,87 @@ const nav = [
   { to: "/account", label: "Account", icon: Settings },
 ] as const;
 
+const DESK_LOCK_KEY = "book-assist-student-desk-lock";
+
 function AppShell() {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
   const queryClient = useQueryClient();
+  const [deskLocked, setDeskLocked] = useState(() =>
+    typeof window !== "undefined" && window.sessionStorage.getItem(DESK_LOCK_KEY) === "1"
+  );
+
+  const isStudentRoute = pathname === "/desk" ||
+    (pathname === "/scan" && new URLSearchParams(searchStr).get("desk") === "1");
+
+  useEffect(() => {
+    if (isStudentRoute) {
+      window.sessionStorage.setItem(DESK_LOCK_KEY, "1");
+      setDeskLocked(true);
+      return;
+    }
+
+    if (window.sessionStorage.getItem(DESK_LOCK_KEY) === "1") {
+      // A student must not unlock librarian pages by navigating directly to their URL.
+      navigate({ to: "/desk", replace: true });
+      setDeskLocked(true);
+      return;
+    }
+
+    setDeskLocked(false);
+  }, [isStudentRoute, pathname, searchStr, navigate]);
 
   async function signOut() {
+    window.sessionStorage.removeItem(DESK_LOCK_KEY);
     await supabaseStore.auth.signOut();
     queryClient.clear();
     navigate({ to: "/" });
   }
 
+  // While the student desk lock is active, only the desk and its scan flow can render.
+  const showStudentView = deskLocked || isStudentRoute;
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar text-sidebar-foreground md:w-60 md:border-b-0 md:border-r">
-        <div className="flex items-center gap-2.5 px-5 py-5 font-display text-lg font-bold text-sidebar-primary">
-          <img src="/book-assist-icon.svg" alt="Book Assist logo" className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(0,229,195,0.28)]" width={48} height={48} />
-          <span>Book Assist</span>
-        </div>
-        <MyCode />
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col">
-          {nav.map((n) => (
-            <Link key={n.to} to={n.to}
-              className="flex items-center gap-3 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/95 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              activeProps={{ className: "border border-sidebar-primary/40 bg-sidebar-accent text-sidebar-primary" }}>
-              <n.icon className="h-4 w-4" /> {n.label}
-            </Link>
-          ))}
-        </nav>
-        <Button variant="ghost" onClick={signOut}
-          className="mt-auto hidden items-center justify-start gap-3 rounded-none px-6 py-6 text-sm text-sidebar-foreground/95 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex">
-          <LogOut className="h-4 w-4" /> Sign out
-        </Button>
-      </aside>
-      <main className="flex-1 p-5 md:p-10"><Outlet /></main>
+      {showStudentView ? (
+        <header className="flex h-20 shrink-0 items-center border-b border-sidebar-border bg-sidebar px-5 text-sidebar-primary">
+          <div className="flex items-center gap-2.5 font-display text-lg font-bold">
+            <img src="/book-assist-icon.svg" alt="Book Assist logo" className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(0,229,195,0.28)]" width={48} height={48} />
+            <span>Book Assist</span>
+          </div>
+        </header>
+      ) : (
+        <aside className="flex shrink-0 flex-col border-b border-sidebar-border bg-sidebar text-sidebar-foreground md:w-60 md:border-b-0 md:border-r">
+          <div className="flex items-center gap-2.5 px-5 py-5 font-display text-lg font-bold text-sidebar-primary">
+            <img src="/book-assist-icon.svg" alt="Book Assist logo" className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(0,229,195,0.28)]" width={48} height={48} />
+            <span>Book Assist</span>
+          </div>
+          <MyCode />
+          <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col">
+            {nav.map((n) => (
+              <Link key={n.to} to={n.to}
+                className="flex items-center gap-3 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/95 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                activeProps={{ className: "border border-sidebar-primary/40 bg-sidebar-accent text-sidebar-primary" }}>
+                <n.icon className="h-4 w-4" /> {n.label}
+              </Link>
+            ))}
+          </nav>
+          <Button variant="ghost" onClick={signOut}
+            className="mt-auto hidden items-center justify-start gap-3 rounded-none px-6 py-6 text-sm text-sidebar-foreground/95 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex">
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
+        </aside>
+      )}
+      <main className="flex-1 p-5 md:p-10">
+        {showStudentView && !isStudentRoute ? (
+          <div className="mx-auto max-w-xl py-16 text-center text-sm text-muted-foreground">
+            Returning to the student desk…
+          </div>
+        ) : (
+          <Outlet />
+        )}
+      </main>
     </div>
   );
 }
