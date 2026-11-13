@@ -1,40 +1,46 @@
 import { supabaseStore } from "@/integrations/supabase/client";
 
-function createLibrarianCode() {
-  const value = new Uint32Array(1);
-  crypto.getRandomValues(value);
-  return "L" + String(value[0] % 1_000_000).padStart(6, "0");
-}
-
 export async function signUpLibrarian(input: { data: { email: string; name: string; pin: string } }) {
   const email = input.data.email.trim().toLowerCase();
   const name = input.data.name.trim();
   const pin = input.data.pin;
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Please enter a valid email");
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error("Please enter a valid email");
   if (!name || name.length > 100) throw new Error("Please enter a librarian name (up to 100 characters)");
-  if (!/^\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
+  if (!/^\\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
 
-  // Generate before signup so the code is available even when email confirmation is required.
-  const code = createLibrarianCode();
-  const { data, error } = await supabaseStore.auth.signUp({
-    email,
-    password: "lib-pin-" + pin,
-    options: { data: { name, librarian_code: code } },
+  const { data, error } = await supabaseStore.functions.invoke("librarian-auth", {
+    body: { action: "signup", email, name, pin },
   });
-  if (error) throw error;
-  if (!data.user) throw new Error("Supabase did not return a new librarian account.");
-  if (data.user.identities?.length === 0) {
-    throw new Error("An account with this email already exists. Sign in instead.");
+  if (error || !data?.session || !data?.code) {
+    throw new Error(data?.error ?? error?.message ?? "Could not create your librarian account");
   }
 
-  if (data.session) {
-    const { error: profileError } = await supabaseStore
-      .from("librarians")
-      .update({ name, email })
-      .eq("user_id", data.user.id);
-    if (profileError) throw profileError;
+  const { error: sessionError } = await supabaseStore.auth.setSession({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+  });
+  if (sessionError) throw sessionError;
+
+  return { code: data.code, session: true };
+}
+
+export async function signInLibrarian(input: { data: { code: string; pin: string } }) {
+  const code = input.data.code.trim().toUpperCase();
+  const pin = input.data.pin;
+  if (!/^L\\d{6}$/.test(code)) throw new Error("Enter your 7-character librarian code");
+  if (!/^\\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
+
+  const { data, error } = await supabaseStore.functions.invoke("librarian-auth", {
+    body: { action: "login", code, pin },
+  });
+  if (error || !data?.session) {
+    throw new Error(data?.error ?? "Invalid librarian code or PIN");
   }
 
-  return { code, session: data.session, user: data.user };
+  const { error: sessionError } = await supabaseStore.auth.setSession({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+  });
+  if (sessionError) throw sessionError;
 }
