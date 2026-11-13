@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BookDown, BookPlus, LibraryBig, LockKeyhole } from "lucide-react";
+import { BookDown, BookPlus, LibraryBig, LockKeyhole, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { booksQuery } from "@/lib/library";
+import { cn } from "@/lib/utils";
 import { supabaseStore } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/desk")({
@@ -23,6 +26,12 @@ function StudentDesk() {
   const [showClose, setShowClose] = useState(false);
   const [pin, setPin] = useState("");
   const [checking, setChecking] = useState(false);
+  const [bookSearch, setBookSearch] = useState("");
+  const { data: books = [], isLoading: booksLoading, error: booksError } = useQuery(booksQuery);
+  const matchingBooks = books.filter((book) =>
+    (book.title + " " + book.author + " " + book.category + " " + (book.shelf_name ?? ""))
+      .toLowerCase().includes(bookSearch.trim().toLowerCase())
+  );
 
   function start(mode: "issue" | "return") {
     // Use a full route navigation so the scan page always receives its student mode
@@ -83,6 +92,37 @@ function StudentDesk() {
           Return Book
         </Button>
       </div>
+      <section className="space-y-4 rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
+        <div>
+          <h2 className="text-xl font-bold">Find a book</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Search by book title, author, category, or shelf code.</p>
+        </div>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Try The Alchemist, Paulo Coelho, Fiction, A01…" value={bookSearch} onChange={(event) => setBookSearch(event.target.value)} aria-label="Search books by title, author, category, or shelf" />
+        </div>
+        {booksLoading ? (
+          <p className="py-4 text-sm text-muted-foreground">Loading books…</p>
+        ) : booksError ? (
+          <p className="py-4 text-sm text-destructive">Could not load the book catalogue. Please try again.</p>
+        ) : matchingBooks.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">{bookSearch ? "No books match your search." : "No books have been added yet."}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {matchingBooks.map((book) => (
+              <article key={book.book_id} className="min-w-0 rounded-xl border bg-background p-4">
+                <h3 className="font-semibold leading-snug">{book.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Author: {book.author}</p>
+                {book.category && <p className="mt-1 text-xs text-muted-foreground">Category: {book.category}</p>}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", book.availability === "Available" ? "bg-success/15 text-success" : "bg-accent/25 text-accent-foreground")}>{book.availability}</span>
+                  <span className="text-sm font-semibold">Shelf {book.shelf_name?.trim() || "Not assigned"}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
       <div className="flex justify-center">
         {!showClose ? (
           <Button variant="ghost" onClick={() => setShowClose(true)}>
