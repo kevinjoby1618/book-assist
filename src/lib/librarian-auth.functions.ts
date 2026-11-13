@@ -9,19 +9,14 @@ export async function signUpLibrarian(input: { data: { email: string; name: stri
   if (!name || name.length > 100) throw new Error("Please enter a librarian name (up to 100 characters)");
   if (!/^\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
 
-  const { data, error } = await supabaseStore.functions.invoke("librarian-auth", {
-    body: { action: "signup", email, name, pin },
+  const { data, error } = await supabaseStore.functions.invoke("librarian-signup", {
+    body: { email, name, pin },
   });
-  if (error || !data?.session || !data?.code) {
+  if (error || !data?.code) {
     throw new Error(data?.error ?? error?.message ?? "Could not create your librarian account");
   }
 
-  const { error: sessionError } = await supabaseStore.auth.setSession({
-    access_token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-  });
-  if (sessionError) throw sessionError;
-
+  await signInLibrarian({ data: { code: data.code, pin } });
   return { code: data.code, session: true };
 }
 
@@ -32,7 +27,7 @@ export async function signInLibrarian(input: { data: { code: string; pin: string
   if (!/^\d{4}$/.test(pin)) throw new Error("PIN must be exactly 4 digits");
 
   const { data, error } = await supabaseStore.functions.invoke("librarian-auth", {
-    body: { action: "login", code, pin },
+    body: { code, pin },
   });
   if (error || !data?.session) {
     throw new Error(data?.error ?? "Invalid librarian code or PIN");
