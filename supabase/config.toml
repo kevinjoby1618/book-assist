@@ -1,0 +1,7 @@
+project_id = "zyclqcnthzpdfgrwbxwu"
+
+[functions.librarian-auth]
+verify_jwt = false
+
+[functions.librarian-signup]
+verify_jwt = false
